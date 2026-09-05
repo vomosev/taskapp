@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/health", "destination": "server/app.js" },
+    { "source": "/api/(.*)", "destination": "server/app.js" }
+  ]
+}

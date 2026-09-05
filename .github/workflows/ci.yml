@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      APP_PORT: "4000"
+      FRONTEND_URL: "http://localhost:3000"
+      NEXT_PUBLIC_API_URL: "http://localhost:4000"
+      DB_HOST: "127.0.0.1"
+      DB_PORT: "3306"
+      DB_USER: "taskapp_test"
+      DB_PASSWORD: "ci-test-password"
+      DB_NAME: "taskapp_test"
+      JWT_SECRET: "ci-only-jwt-secret-not-for-production"
+      JWT_EXPIRES_IN: "1h"
+      SMTP_HOST: "localhost"
+      SMTP_PORT: "1025"
+      SMTP_SECURE: "false"
+      SMTP_USER: "ci-test-user"
+      SMTP_PASSWORD: "ci-test-password"
+      SMTP_FROM: "Taskapp CI <taskapp-ci@example.test>"
+      NOTIFICATION_POLL_CRON: "*/5 * * * *"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run Jest tests
+        run: npm test -- --runInBand
+        env:
+          NODE_ENV: test
+
+      - name: Verify Next.js production build
+        run: npm run build
+        env:
+          NODE_ENV: production
